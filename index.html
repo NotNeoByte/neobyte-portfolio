@@ -1082,9 +1082,56 @@
     finally{ saveBtn.disabled=false; saveBtn.textContent = editingPostId ? 'Update' : 'Post'; }
   });
 
-  loadContent();
-  loadPortfolio();
-  loadReviews();
+  window.addEventListener('firebase-ready', ()=>{
+    loadContent();
+    loadPortfolio();
+    loadReviews();
+  });
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYMLDf9JcA-TSoD2p4_eZsXKnjHrh9u9I",
+    authDomain: "neobyte-portfolio.firebaseapp.com",
+    projectId: "neobyte-portfolio",
+    storageBucket: "neobyte-portfolio.firebasestorage.app",
+    messagingSenderId: "315805029933",
+    appId: "1:315805029933:web:d2cccbf7f2fd808515caa4",
+    measurementId: "G-K97W0954DX"
+  };
+
+  try{
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.storage = {
+      async get(key, shared){
+        const snap = await getDoc(doc(db, "siteData", key));
+        if(!snap.exists()) return null;
+        return { key, value: snap.data().value, shared: !!shared };
+      },
+      async set(key, value, shared){
+        await setDoc(doc(db, "siteData", key), { value });
+        return { key, value, shared: !!shared };
+      },
+      async delete(key, shared){
+        await deleteDoc(doc(db, "siteData", key));
+        return { key, deleted: true, shared: !!shared };
+      }
+    };
+  }catch(err){
+    console.error('Firebase init failed:', err);
+    window.storage = {
+      async get(){ return null; },
+      async set(){ throw new Error('Firebase not available'); },
+      async delete(){ throw new Error('Firebase not available'); }
+    };
+  }
+
+  window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
 </body>
