@@ -470,10 +470,11 @@
     <div id="adminGateWrap">
       <div class="admin-gate">
         <h1 style="font-size:24px">Admin Access</h1>
-        <p style="margin-bottom:16px">Enter your passcode to edit site content.</p>
-        <input type="password" id="adminPass" placeholder="Passcode" style="width:100%;background:var(--bg-void);border:1px solid var(--border-line);border-radius:6px;color:var(--text-1);padding:10px 12px;margin-bottom:12px;">
-        <button class="btn" id="adminUnlock">Unlock</button>
-        <p style="margin-top:14px;font-size:11.5px;color:var(--text-3)">Default passcode: neobyte-admin — change it in the code (ADMIN_PASSCODE constant) before sharing this site.</p>
+        <p style="margin-bottom:16px">Sign in to edit site content.</p>
+        <input type="email" id="adminEmail" placeholder="Email" style="width:100%;background:var(--bg-void);border:1px solid var(--border-line);border-radius:6px;color:var(--text-1);padding:10px 12px;margin-bottom:10px;">
+        <input type="password" id="adminPass" placeholder="Password" style="width:100%;background:var(--bg-void);border:1px solid var(--border-line);border-radius:6px;color:var(--text-1);padding:10px 12px;margin-bottom:12px;">
+        <button class="btn" id="adminUnlock">Sign In</button>
+        <div class="status-note" id="adminLoginStatus"></div>
       </div>
     </div>
     <div id="adminPanelWrap" style="display:none">
@@ -606,7 +607,7 @@
       tabButtons.forEach(b=>b.classList.remove('active'));
     }
     window.scrollTo({top:0,behavior:'smooth'});
-    if(viewId === 'admin') initAdminGate();
+    if(viewId === 'admin'){ window.__adminLoggedIn ? showAdminPanel() : initAdminGate(); }
   }
   tabButtons.forEach(btn=>btn.addEventListener('click', ()=>goto(btn.dataset.view)));
   document.querySelectorAll('[data-goto]').forEach(el=>el.addEventListener('click', ()=>goto(el.dataset.goto)));
@@ -888,12 +889,26 @@
     finally{ tosSubmit.textContent='Submit'; tosSubmit.disabled = !tosCheck.checked; }
   });
 
-  const ADMIN_PASSCODE = "neobyte-admin";
-  document.getElementById('adminUnlock').addEventListener('click', ()=>{
-    const val = document.getElementById('adminPass').value;
-    if(val === ADMIN_PASSCODE){ showAdminPanel(); } else { alert('Wrong passcode.'); }
+  document.getElementById('adminUnlock').addEventListener('click', async ()=>{
+    const email = document.getElementById('adminEmail').value.trim();
+    const pass = document.getElementById('adminPass').value;
+    const statusEl = document.getElementById('adminLoginStatus');
+    const btn = document.getElementById('adminUnlock');
+    if(!email || !pass){ statusEl.textContent = 'Enter email and password.'; return; }
+    if(!window.adminAuth){ statusEl.textContent = 'Login system still loading — try again in a second.'; return; }
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    statusEl.textContent = '';
+    try{
+      await window.adminAuth.signIn(email, pass);
+      // showAdminPanel() runs automatically via the onChange listener below
+    }catch(err){
+      statusEl.textContent = 'Sign-in failed — check email and password.';
+    }finally{
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
   });
-  document.getElementById('adminLogout').addEventListener('click', ()=>{
+  document.getElementById('adminLogout').addEventListener('click', async ()=>{
+    if(window.adminAuth){ try{ await window.adminAuth.signOut(); }catch(err){} }
     document.getElementById('adminGateWrap').style.display='block';
     document.getElementById('adminPanelWrap').style.display='none';
     document.getElementById('adminPass').value='';
@@ -902,6 +917,15 @@
     document.getElementById('adminGateWrap').style.display='block';
     document.getElementById('adminPanelWrap').style.display='none';
   }
+  window.addEventListener('admin-auth-changed', (e)=>{
+    window.__adminLoggedIn = !!(e.detail && e.detail.loggedIn);
+    if(window.__adminLoggedIn){
+      showAdminPanel();
+    } else {
+      document.getElementById('adminGateWrap').style.display='block';
+      document.getElementById('adminPanelWrap').style.display='none';
+    }
+  });
   async function showAdminPanel(){
     document.getElementById('adminGateWrap').style.display='none';
     document.getElementById('adminPanelWrap').style.display='block';
@@ -1092,6 +1116,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDYMLDf9JcA-TSoD2p4_eZsXKnjHrh9u9I",
@@ -1106,6 +1131,7 @@
   try{
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     window.storage = {
       async get(key, shared){
@@ -1122,6 +1148,14 @@
         return { key, deleted: true, shared: !!shared };
       }
     };
+
+    window.adminAuth = {
+      signIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
+      signOut(){ return signOut(auth); }
+    };
+    onAuthStateChanged(auth, (user)=>{
+      window.dispatchEvent(new CustomEvent('admin-auth-changed', { detail: { loggedIn: !!user } }));
+    });
   }catch(err){
     console.error('Firebase init failed:', err);
     window.storage = {
@@ -1129,6 +1163,7 @@
       async set(){ throw new Error('Firebase not available'); },
       async delete(){ throw new Error('Firebase not available'); }
     };
+    window.adminAuth = null;
   }
 
   window.dispatchEvent(new Event('firebase-ready'));
