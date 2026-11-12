@@ -1164,6 +1164,7 @@ function applyTheme(){
    ===================================================================== */
 function applyText(){
   document.querySelectorAll('[data-k]').forEach(el=>{
+    if(!(el.dataset.k in DEFAULTS.text))return;
     const v=CFG.text[el.dataset.k]??'';
     if(el.dataset.fmt==='list') el.innerHTML=v.split('\n').filter(Boolean).map(l=>`<li>${fmt(l)}</li>`).join('');
     else if(el.dataset.fmt==='num'){const m=String(v).match(/^([\d.,]+)(.*)$/);el.innerHTML=m?`${esc(m[1])}${m[2]?`<small>${esc(m[2])}</small>`:''}`:esc(v);}
