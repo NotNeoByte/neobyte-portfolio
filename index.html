@@ -1828,7 +1828,7 @@ function cacheCfg(c){store.set('nb_cfg_cache',c);}
     document.querySelectorAll('.rv').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight){el.classList.add('pre');io.observe(el);}});}
   await initBackend();
   try{const remote=await DB.getConfig();const next=mergeCfg(remote);const changed=JSON.stringify(next)!==JSON.stringify(CFG);
-    CFG=next;SAVED=clone(CFG);await loadImages(CFG);if(changed||!cached)renderAll();if(remote)cacheCfg(remote);}catch(e){console.warn('Config load failed',e);}
+    CFG=next;SAVED=clone(CFG);const missing=refsIn(CFG).filter(id=>!IMG[id]).length;await loadImages(CFG);if(changed||!cached||missing)renderAll();if(remote)cacheCfg(remote);}catch(e){console.warn('Config load failed',e);}
   siteReady();
   loadReviews();
   await DB.ready;
