@@ -156,8 +156,8 @@ section{padding:110px 0}
 .card:hover{transform:translateY(-4px);border-color:rgba(var(--accent-rgb),.45);box-shadow:0 24px 50px -24px rgba(0,0,0,.85),0 0 0 1px rgba(var(--accent-rgb),.12)}
 .card.wide{grid-column:span 2}
 .card.hide{display:none}
-.thumb{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--bg)}
-.card.wide .thumb{aspect-ratio:16/8.1}
+.thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--bg)}
+.card.wide .thumb{aspect-ratio:16/9}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease)}
 .card:hover .thumb img{transform:scale(1.04)}
 .chip{font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:5px 9px;border-radius:6px;text-transform:uppercase;background:var(--glass);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.08);color:var(--ink)}
@@ -319,8 +319,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:110px}
 .sheet{width:min(1180px,100%);max-height:100%;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,1fr);background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;transform:translateY(16px) scale(.985);transition:transform .35s var(--ease);box-shadow:0 40px 100px -30px rgba(0,0,0,.9)}
 .modal.open .sheet{transform:none}
 .viewer{background:var(--bg);display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
-.stage{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--bg);cursor:zoom-in}
-.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .3s var(--ease)}
+.stage{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--bg);cursor:zoom-in}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .3s var(--ease)}
 .stage img.fade{opacity:0}
 .nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--glass);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);font-size:18px;display:grid;place-items:center;transition:background .2s,border-color .2s}
 .nav-btn:hover{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -328,7 +328,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:110px}
 .stage .counter{position:absolute;left:14px;bottom:14px}
 .stage .expand{position:absolute;right:14px;bottom:14px}
 .strip{display:flex;gap:8px;padding:12px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent;border-top:1px solid var(--line)}
-.strip button,.lb-strip button{flex:none;aspect-ratio:16/10;border-radius:8px;overflow:hidden;opacity:.5;outline:2px solid transparent;outline-offset:-2px;transition:opacity .2s,outline-color .2s}
+.strip button,.lb-strip button{flex:none;aspect-ratio:16/9;border-radius:8px;overflow:hidden;opacity:.5;outline:2px solid transparent;outline-offset:-2px;transition:opacity .2s,outline-color .2s}
 .strip button{width:104px}.lb-strip button{width:76px}
 .strip button:hover{opacity:.85}
 .strip button[aria-current="true"],.lb-strip button[aria-current="true"]{opacity:1;outline-color:var(--accent)}
@@ -453,15 +453,15 @@ footer{padding:60px 0 40px;border-top:1px solid var(--line);margin-top:110px}
 .mini.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .wrow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .wrow:first-child{border-top:0}
-.wrow img{width:96px;aspect-ratio:16/10;object-fit:cover;border-radius:8px}
+.wrow img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:8px}
 .wrow .t b{display:block}
 .wrow .t span{font-size:12.5px;color:var(--mute)}
 .wrow .a{display:flex;gap:6px}
 .imgpick{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.imgpick img{width:140px;aspect-ratio:16/10;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.imgpick img{width:140px;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
 .shotlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
 .shot{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}
-.shot img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.shot img{width:100%;aspect-ratio:16/9;object-fit:cover}
 .shot .s-b{padding:8px;display:flex;flex-direction:column;gap:6px}
 .shot .s-b input{padding:7px 9px;font-size:13px}
 .shot .s-a{display:flex;gap:4px}
@@ -583,7 +583,7 @@ html.booting body::after{content:"";position:fixed;left:50%;top:50%;width:26px;h
 @media (max-width:620px){
   .works{grid-template-columns:1fr}
   .card.wide{grid-column:auto}
-  .card.wide .thumb{aspect-ratio:16/10}
+  .card.wide .thumb{aspect-ratio:16/9}
   .nav-cta .btn-primary{display:none}
   section{padding:80px 0}
   .hero{padding-top:110px}
@@ -1127,13 +1127,13 @@ async function loadImages(c){await Promise.all(refsIn(c).filter(id=>!IMG[id]).ma
 const srcOf=ref=>!ref?'':ref.startsWith('img:')?(IMG[ref.slice(4)]||''):ref;
 
 /* compress an image file to a JPEG data URL under ~850KB */
-function compress(file,max=1600){
+function compress(file,max=1920){
   return new Promise((res,rej)=>{
     const fr=new FileReader();fr.onerror=()=>rej(new Error('Could not read that file.'));
     fr.onload=()=>{const im=new Image();im.onerror=()=>rej(new Error('That file is not an image.'));
       im.onload=()=>{let w=im.width,h=im.height;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);
         const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
-        let q=.85,out=c.toDataURL('image/jpeg',q);while(out.length>850000&&q>.4){q-=.1;out=c.toDataURL('image/jpeg',q);}
+        let q=.85,out=c.toDataURL('image/jpeg',q);while(out.length>950000&&q>.4){q-=.1;out=c.toDataURL('image/jpeg',q);}
         res(out);};im.src=fr.result;};
     fr.readAsDataURL(file);});
 }
@@ -1197,7 +1197,7 @@ const artCache={};
 function artURL(seed,cat){
   const key=seed+cat;if(artCache[key])return artCache[key];
   const H={build:[THEME.hue-12,THEME.hue+10],model:[THEME.sigHue-8,THEME.sigHue+8],ui:[THEME.hue+28,THEME.hue+46]}[cat]||[THEME.hue,THEME.hue];
-  const w=960,h=600,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');
+  const w=960,h=540,c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');
   let s=seed*9301+49297;const r=()=>((s=(s*9301+49297)%233280)/233280);
   const bg=g.createLinearGradient(0,0,w,h);bg.addColorStop(0,`hsl(${H[1]} 40% 11%)`);bg.addColorStop(1,`hsl(${H[0]} 35% 5%)`);g.fillStyle=bg;g.fillRect(0,0,w,h);
   const t=46,cx=w/2,cy=h*.3,N=7;
@@ -1512,7 +1512,7 @@ function pWorkEdit(P){
     <div class="imgpick"><img src="${coverOf(i)}" alt=""><div class="chips"><button id="cUp">Upload image</button><button id="cUrl">Use URL</button>${w.img?'<button id="cClr">Remove</button>':''}</div></div></div>
   ${w.cat==='build'?`<div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px"><h3>Screenshots · ${(w.shots||[]).length}</h3><div class="chips"><button id="sUp">+ Upload images</button>${(w.shots||[]).some(x=>!x.src)?`<button id="sClean">Remove ${(w.shots||[]).filter(x=>!x.src).length} empty</button>`:''}</div></div>
     <p class="sub">These show in the project viewer and fullscreen gallery, in this order.</p>
-    <div class="shotlist" id="shots">${(w.shots||[]).map((s,k)=>`<div class="shot" data-k="${k}">${srcOf(s.src)?`<img src="${srcOf(s.src)}" alt="">`:`<div style="aspect-ratio:16/10;display:grid;place-items:center;color:var(--mute);font-size:12.5px;background:var(--panel)">No image yet</div>`}
+    <div class="shotlist" id="shots">${(w.shots||[]).map((s,k)=>`<div class="shot" data-k="${k}">${srcOf(s.src)?`<img src="${srcOf(s.src)}" alt="">`:`<div style="aspect-ratio:16/9;display:grid;place-items:center;color:var(--mute);font-size:12.5px;background:var(--panel)">No image yet</div>`}
       <div class="s-b"><input class="input" data-l value="${esc(s.label)}" placeholder="Label"><div class="s-a"><button class="mini" data-a="up" aria-label="Move left">←</button><button class="mini" data-a="down" aria-label="Move right">→</button><button class="mini" data-a="img">Image</button><button class="mini danger" data-a="del" aria-label="Remove">✕</button></div></div></div>`).join('')}</div></div>`:''}
   <div class="box"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px"><h3>Properties</h3><button class="mini" id="kAdd">+ Add row</button></div><p class="sub">The list on the right of the project popup.</p>
     <div id="kv">${(w.spec||[]).map(([k,v],n)=>`<div class="kv" data-n="${n}"><input class="input" data-kv="0" value="${esc(k)}" placeholder="Name"><input class="input" data-kv="1" value="${esc(v)}" placeholder="Value"><button class="mini danger" data-a="del" aria-label="Remove row">✕</button></div>`).join('')}</div></div>`;
