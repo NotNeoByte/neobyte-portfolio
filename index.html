@@ -1076,6 +1076,7 @@ async function initBackend(){
           const q=all?F.collection(fs,'reviews'):F.query(F.collection(fs,'reviews'),F.where('status','==','approved'));
           const s=await F.getDocs(q);return s.docs.map(d=>({id:d.id,...d.data()}));},
         addReview:r=>F.addDoc(F.collection(fs,'reviews'),{...r,status:'pending',likes:0,createdAt:Date.now()}),
+        adminAddReview:r=>F.addDoc(F.collection(fs,'reviews'),{...r,status:'approved',likes:0}),
         updateReview:(id,p)=>F.updateDoc(F.doc(fs,'reviews',id),p),
         deleteReview:id=>F.deleteDoc(F.doc(fs,'reviews',id)),
         like:(id,d)=>F.updateDoc(F.doc(fs,'reviews',id),{likes:F.increment(d)})
@@ -1100,6 +1101,7 @@ async function initBackend(){
     putImage:async data=>{const id=uid();if(!store.set(K+'img_'+id,data))throw new Error('Browser storage is full. Use smaller images or connect Firebase.');return id;},
     listReviews:async all=>clone(revs().filter(r=>all||r.status==='approved')),
     addReview:async r=>{const a=revs();a.push({...r,id:uid(),status:'pending',likes:0,createdAt:Date.now()});setRevs(a);},
+    adminAddReview:async r=>{const a=revs();a.push({...r,id:uid(),status:'approved',likes:0});setRevs(a);},
     updateReview:async(id,p)=>{setRevs(revs().map(r=>r.id===id?{...r,...p}:r));},
     deleteReview:async id=>{setRevs(revs().filter(r=>r.id!==id));},
     like:async(id,d)=>{setRevs(revs().map(r=>r.id===id?{...r,likes:Math.max(0,(r.likes||0)+d)}:r));}
@@ -1365,7 +1367,8 @@ function squareAvatar(file,size=128){return new Promise((res,rej)=>{const fr=new
 function paintAv(){$('rAvPrev').innerHTML=rAvatar?`<img src="${rAvatar}" alt="">`:'＋';$('rAvClr').hidden=!rAvatar;$('rAvBtn').textContent=rAvatar?'Change photo':'Add photo';}
 $('rAvBtn').onclick=()=>{$('rAvFile').value='';$('rAvFile').click();};
 $('rAvPrev').onclick=()=>$('rAvBtn').click();
-$('rAvFile').onchange=async()=>{const f=$('rAvFile').files[0];if(!f)return;try{rAvatar=await squareAvatar(f);paintAv();}catch(er){const m=$('rMsg');m.className='form-msg err';m.textContent=er.message;m.hidden=false;}};
+const rAvChange=async()=>{const f=$('rAvFile').files[0];if(!f)return;try{rAvatar=await squareAvatar(f);paintAv();}catch(er){const m=$('rMsg');m.className='form-msg err';m.textContent=er.message;m.hidden=false;}};
+$('rAvFile').onchange=rAvChange;
 $('rAvClr').onclick=()=>{rAvatar='';paintAv();};
 $('rForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('rMsg');
   const name=$('rName').value.trim(),text=$('rText').value.trim(),roblox=$('rRoblox').value.trim().replace(/^@/,'');
@@ -1452,10 +1455,43 @@ function pOverview(P){
 }
 
 /* --- Reviews --- */
+let arAvatar='';
+function addReviewBox(){
+  const today=new Date().toISOString().slice(0,10);
+  return `<div class="box fgroup" id="arBox"><div><h3>Add a review</h3><p class="sub" style="margin:0">Paste reviews from Discord or anywhere else. They go live right away. The form clears after each one so you can add the next.</p></div>
+    <div class="grid3"><div class="field"><label for="arName">Name</label><input id="arName" maxlength="40" placeholder="e.g. cazzchud"></div>
+      <div class="field"><label for="arRoblox">Roblox username <span>(optional)</span></label><input id="arRoblox" maxlength="30"></div>
+      <div class="field"><label for="arDate">Date</label><input id="arDate" type="date" value="${today}" max="${today}"></div></div>
+    <div class="grid3"><div class="field"><label for="arRating">Rating</label><select id="arRating"><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></div>
+      <div class="field"><label for="arProject">Project type</label><select id="arProject"><option>Building</option><option>Modeling</option><option>UI Design</option><option>Other</option></select></div>
+      <div class="field"><label>Profile picture <span>(optional)</span></label><div class="avpick"><span class="av" id="arAvPrev" style="width:42px;height:42px;font-size:18px">＋</span><div class="chips"><button type="button" id="arAvBtn">${arAvatar?'Change':'Add photo'}</button>${arAvatar?'<button type="button" id="arAvClr">Remove</button>':''}</div></div></div></div>
+    <div class="field"><label for="arText">Review text</label><textarea id="arText" rows="3" maxlength="600" style="min-height:0" placeholder="Paste the review here"></textarea></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn btn-primary sm" id="arAdd">Add &amp; publish</button><span class="hud mute" id="arCount"></span></div></div>`;
+}
+let arAdded=0;
+function bindAddReview(P){
+  const prev=$('arAvPrev');if(arAvatar)prev.innerHTML=`<img src="${arAvatar}" alt="">`;
+  const pick=async()=>{const f=$('rAvFile');f.value='';f.onchange=async()=>{const file=f.files[0];if(!file)return;try{arAvatar=await squareAvatar(file);keep();}catch(er){toast(er.message,true);}finally{f.onchange=rAvChange;}};f.click();};
+  const keep=()=>{const v={n:$('arName').value,r:$('arRoblox').value,d:$('arDate').value,s:$('arRating').value,p:$('arProject').value,t:$('arText').value};pReviews(P);
+    $('arName').value=v.n;$('arRoblox').value=v.r;$('arDate').value=v.d;$('arRating').value=v.s;$('arProject').value=v.p;$('arText').value=v.t;};
+  $('arAvBtn').onclick=pick;prev.onclick=pick;if($('arAvClr'))$('arAvClr').onclick=()=>{arAvatar='';keep();};
+  if(arAdded)$('arCount').textContent=`${arAdded} added this session`;
+  $('arAdd').onclick=async()=>{
+    const name=$('arName').value.trim(),text=$('arText').value.trim();
+    if(!name||text.length<2){toast('Add a name and the review text.',true);return;}
+    const d=$('arDate').value?new Date($('arDate').value+'T12:00:00').getTime():Date.now();
+    const r={name:name.slice(0,40),roblox:$('arRoblox').value.trim().replace(/^@/,'').slice(0,30),project:$('arProject').value,rating:+$('arRating').value,text:text.slice(0,600),createdAt:d};
+    if(okAv(arAvatar))r.avatar=arAvatar;
+    $('arAdd').disabled=true;
+    try{await DB.adminAddReview(r);arAdded++;arAvatar='';toast('Review added and live.');await loadAdminReviews();renderTabs();
+      const keepDate=$('arDate').value,keepProj=$('arProject').value;pReviews(P);$('arDate').value=keepDate;$('arProject').value=keepProj;$('arName').focus();loadReviews();}
+    catch(er){console.warn(er);toast('Could not add it. Check your Firestore rules were updated.',true);$('arAdd').disabled=false;}
+  };
+}
 function pReviews(P){
   const list=ADMIN_REVS.filter(r=>revFilter==='all'||r.status===revFilter).sort((a,b)=>b.createdAt-a.createdAt);
   const cnt=s=>ADMIN_REVS.filter(r=>s==='all'||r.status===s).length;
-  P.innerHTML=`<div class="box">
+  P.innerHTML=addReviewBox()+`<div class="box">
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
       <div class="chips" id="rf">${['pending','approved','all'].map(s=>`<button data-s="${s}" aria-pressed="${s===revFilter}">${s[0].toUpperCase()+s.slice(1)} · ${cnt(s)}</button>`).join('')}</div>
       <button class="mini" id="rRefresh">↻ Refresh</button></div>
@@ -1474,6 +1510,7 @@ function pReviews(P){
         </div></div>`).join(''):'<p class="sub" style="margin:0">Nothing here.</p>'}</div></div>`;
   $('rf').onclick=e=>{const b=e.target.closest('button');if(b){revFilter=b.dataset.s;pReviews(P);}};
   $('rRefresh').onclick=async()=>{await loadAdminReviews();renderTabs();pReviews(P);};
+  bindAddReview(P);
   $('rlist').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const row=b.closest('.rrow'),id=row.dataset.id,r=ADMIN_REVS.find(x=>x.id===id),a=b.dataset.a;
     try{
       if(a==='del'){if(b.dataset.c!=='1'){b.dataset.c='1';b.textContent='Click again to delete';return;}await DB.deleteReview(id);toast('Review deleted.');}
